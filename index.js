@@ -1,5 +1,7 @@
 const pg = require('pg');
 const client = new pg.Client(process.env.DATABASE_URL || 'postgres://localhost/acme_notes_crud_db');
+const express = require('express');
+const app = express();
 
 const init = async() => {
   console.log('connecting to database');
@@ -17,13 +19,16 @@ const init = async() => {
   `; 
   await client.query(SQL);
   console.log("tables created")
- SQL = `
+  SQL = `
     INSERT INTO notes(txt) VALUES('hello');
     INSERT INTO notes(txt, ranking) VALUES('world', 3);
     INSERT INTO notes(ranking, txt) VALUES(3, 'hello world again!');
   `; 
   await client.query(SQL);
   console.log('data seeded');
+
+  const port = process.env.PORT || 3000;
+  app.listen(port, ()=> console.log(`listening on port ${port}`));
 }
 
 init();
