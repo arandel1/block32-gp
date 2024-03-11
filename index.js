@@ -4,17 +4,18 @@ const express = require('express');
 const app = express();
 const morgan = require('morgan');
 
+app.use(express.json());
 app.use(morgan('dev'));
 
-app.post('/api/notes/:id', async(req, res, next) => {
+app.post('/api/notes', async(req, res, next) => {
   try{
     const SQL = `
     INSERT INTO notes(txt, ranking)
     VALUES ($1, $2)
-    RESTURNING *
+    RETURNING *
     `;
-    const response = await client.query(SQL);
-    res.send(response.rows);
+    const response = await client.query(SQL, [req.body.txt, req.body.ranking]);
+    res.send(response.rows[0]);
   }
   catch(ex){
     next(ex); 
@@ -30,6 +31,22 @@ app.get('/api/notes', async(req, res, next) => {
     `;
     const response = await client.query(SQL);
     res.send(response.rows);
+  }
+  catch(ex){
+    next(ex); 
+  }
+});
+
+app.put('/api/notes/:id', async(req, res, next) => {
+  try{
+    const SQL = `
+    UPDATE notes
+    SET txt=$1, ranking=$2, updated_at=now()
+    WHERE id = $1
+    RETURNING *
+    `;
+    const response = await client.query(SQL, [req.body.txt, req.body.ranking, req.params.id]);
+    res.send(response.rows[0]);
   }
   catch(ex){
     next(ex); 
