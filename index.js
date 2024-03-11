@@ -2,6 +2,74 @@ const pg = require('pg');
 const client = new pg.Client(process.env.DATABASE_URL || 'postgres://localhost/acme_notes_crud_db');
 const express = require('express');
 const app = express();
+const morgan = require('morgan');
+
+app.use(morgan('dev'));
+
+app.post('/api/notes/:id', async(req, res, next) => {
+  try{
+    const SQL = `
+    INSERT INTO notes(txt, ranking)
+    VALUES ($1, $2)
+    RESTURNING *
+    `;
+    const response = await client.query(SQL);
+    res.send(response.rows);
+  }
+  catch(ex){
+    next(ex); 
+  }
+});
+
+app.get('/api/notes', async(req, res, next) => {
+  try{
+    const SQL = `
+    SELECT * 
+    FROM NOTES
+    ORDER BY ranking DESC
+    `;
+    const response = await client.query(SQL);
+    res.send(response.rows);
+  }
+  catch(ex){
+    next(ex); 
+  }
+});
+
+app.get('/api/notes/:id', async(req, res, next) => {
+  try{
+    const SQL = `
+    SELECT * 
+    FROM NOTES
+    WHERE id = $1
+    `;
+    const response = await client.query(SQL, [req.params.id]);
+    res.send(response.rows[0]);
+  }
+  catch(ex){
+    next(ex); 
+  }
+});
+
+app.delete('/api/notes/:id', async(req, res, next) => {
+  try{
+    const SQL = `
+    DELETE
+    FROM NOTES
+    WHERE id = $1
+    `;
+    const response = await client.query(SQL, [req.params.id]);
+    res.sendStatus(204);
+  }
+  catch(ex){
+    next(ex); 
+  }
+});
+
+app.use((err, req, res, next)=> {
+  console.log(err);
+  res.status(err.status || 500).send({ message: err.message || err});
+});
 
 const init = async() => {
   console.log('connecting to database');
